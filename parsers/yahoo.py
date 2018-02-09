@@ -26,8 +26,8 @@ class YahooNBAParser(object):
                 continue
             else:
                 for item in v['team'][0]:
-                if item:
-                    t.append(item)
+                    if item:
+                        t.append(item)
             results.append(merge_many({}, t))
         return results
 

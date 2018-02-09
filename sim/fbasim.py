@@ -17,8 +17,8 @@ from nba.season import current_season_code
 
 
 @lru_cache(maxsize=100)
-def load_data(per_mode, playerpool_size, thresh_gp, thresh_min,
-              season_code=None, fn=None, sortcol=None, lastn=0):
+def load_data(per_mode, playerpool_size, thresh_gp, thresh_min, lastn=0,
+              season_code=None, sortcol=None, fn=None):
     '''
     Loads data from nba.com or csv file
 
@@ -27,10 +27,10 @@ def load_data(per_mode, playerpool_size, thresh_gp, thresh_min,
         playerpool_size (int): number of players in pool
         thresh_gp (int): minimum number of games played
         thresh_min (int): minimum number of minutes played
+        lastn (int): last number of games, default 0
         season_code (str): '2017-18', etc., default None
         sortcol (str): sort, default None
         fn (str): filename of csv, default None
-        lastn (int): last number of games, default 0
 
     Returns:
         DataFrame

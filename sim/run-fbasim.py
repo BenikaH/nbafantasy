@@ -12,13 +12,14 @@ from nbafantasy.sim.fbasim import load_data, sim, parallelsim
 @click.option('--league_type', default='Tim', type=str, help='Tim, 8Cat, 9Cat')
 @click.option('--thresh_min', default=0, type=int, help='Minimum minutes played')
 @click.option('--thresh_gp', default=0, type=int, help='Minimum minutes played')
+@click.option('--last_n', default=0, type=int, help='Last Number of Games')
 @click.option('--per_mode', default='Totals', type=str, help='Totals, PerGame, Per48')
 @click.option('--playerpool_size', default=200, type=int, help='Number of players in pool')
 @click.option('--numteams', default=10, type=int, help='Number of teams in league')
 @click.option('--sizeteams', default=10, type=int, help='Number of players on team')
 @click.option('--parallel', default=0, type=int, help='Use parallel processing')
 @click.option('--vorp', default=0, type=int, help='Compare to league average')
-def run(n, league_type, thresh_min, thresh_gp, per_mode, playerpool_size, 
+def run(n, league_type, thresh_min, thresh_gp, last_n, per_mode, playerpool_size,
         numteams, sizeteams, parallel, vorp):
     '''
     \b
@@ -44,7 +45,7 @@ def run(n, league_type, thresh_min, thresh_gp, per_mode, playerpool_size,
         rk_cols = ['FGP_RK', 'FTM_RK', 'FG3M_RK', 'REB_RK', 'AST_RK', 
                    'STL_RK', 'BLK_RK', 'TOV_RK', 'PTS_RK', 'TOT_RK']
 
-    players = load_data(per_mode, playerpool_size, thresh_gp, thresh_min) 
+    players = load_data(per_mode, playerpool_size, thresh_gp, thresh_min, last_n)
 
     if parallel:
         results = parallelsim(players, initialcols, n, parallel, 
