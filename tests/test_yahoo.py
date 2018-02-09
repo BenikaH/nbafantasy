@@ -134,16 +134,45 @@ class Yahoo_test(unittest.TestCase):
 
         '''
         for subr in self.scraper.players_subresources:
-            pass
-            #g = self.scraper.player(player_key=self.player_keys(1)[0], subresource=subr)
-            #logging.info(g)
-            #self.assertIsNotNone(g.get('fantasy_content'))
+            # league
+            g = self.scraper.players(league_id=self.league_id, subresource=subr)
+            logging.info(g)
+            self.assertIsNotNone(g.get('fantasy_content'))
+
+            # leagues
+            g = self.scraper.players(league_ids=[self.league_id, self.league_id], subresource=subr)
+            logging.info(g)
+            self.assertIsNotNone(g.get('fantasy_content'))
+
+            # team
+            g = self.scraper.players(team_key=self.team_keys(1)[0], subresource=subr)
+            logging.info(g)
+            self.assertIsNotNone(g.get('fantasy_content'))
+
+            # teams
+            g = self.scraper.players(team_keys=self.team_keys(2), subresource=subr)
+            logging.info(g)
+            self.assertIsNotNone(g.get('fantasy_content'))
+
+            # players
+            g = self.scraper.players(player_keys=self.player_keys(2), subresource=subr)
+            logging.info(g)
+            self.assertIsNotNone(g.get('fantasy_content'))
+
+        filts = {'position': {'position': random.choice(['PG', 'SG', 'SF', 'PF', 'C'])},
+                 'status': {'status': random.choice(['A', 'FA', 'W', 'T', 'K'])},
+                 'search': {'search': random.choice(['smith', 'williams', 'jones'])},
+                 'sort': {'sort': '60'},
+                 'sort_type': {'sort_type': random.choice(['season', 'lastmonth', 'lastweek'])},
+                 'sort_season': {'sort_season': self.scraper.yahoo_season},
+                 'sort_date': {'sort_date': '2018-01-15'},
+                 'start': {'start': random.randint(0,40)},
+                 'count': {'count': random.randint(1,10)}}
 
         for filt in self.scraper.players_filters:
-            pass
-            #g = self.scraper.player(player_key=self.player_keys(1)[0], subresource=subr)
-            #logging.info(g)
-            #self.assertIsNotNone(g.get('fantasy_content'))
+            g = self.scraper.players(self.league_id, filters=filts[filt])
+            logging.info(g)
+            self.assertIsNotNone(g.get('fantasy_content'))
 
     @unittest.skip('skip test_roster')
     def test_roster(self):

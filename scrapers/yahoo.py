@@ -11,7 +11,8 @@ from nbafantasy.utility import merge_two
 
 class YahooFantasyScraper(BasketballScraper):
 
-    def __init__(self, authfn, yahoo_season=None, headers=None, cookies=None, cache_name=None, expire_hours=4, as_string=False):
+    def __init__(self, authfn, yahoo_season=None, response_format='json', headers=None,
+                 cookies=None, cache_name=None, expire_hours=4, as_string=False):
         '''
         Initialize scraper object
 
@@ -34,6 +35,7 @@ class YahooFantasyScraper(BasketballScraper):
                                    expire_hours=expire_hours, as_string=as_string)
         self.authfn = authfn
         self.auth_uri = 'https://api.login.yahoo.com/oauth2/request_auth'
+        self.response_format = {'format': response_format}
         self.sport = 'nba'
         self.token_uri = 'https://api.login.yahoo.com/oauth2/get_token'
 
@@ -53,7 +55,7 @@ class YahooFantasyScraper(BasketballScraper):
         
         '''
         vals = ['{}={}'.format(k, filters[k]) for k in sorted(filters.keys())]
-        return ','.join(vals)
+        return ';' + ','.join(vals)
 
     def _league_key(self, league_id):
         '''
@@ -287,8 +289,23 @@ class YahooFantasyScraper(BasketballScraper):
             list
 
         '''
+        # for football, replace sort_date with sort_week
         return ['position', 'status', 'search', 'sort', 'sort_type', 'sort_season',
-                'sort_date', 'sort_week', 'start', 'count']
+                'sort_date', 'start', 'count']
+
+    @property
+    def players_subresources(self):
+        '''
+        Valid player subresources
+
+        Args:
+            None
+
+        Returns:
+            list
+
+        '''
+        return self.player_subresources
 
     @property
     def roster_subresources(self):
@@ -534,62 +551,66 @@ class YahooFantasyScraper(BasketballScraper):
         url = 'https://fantasysports.yahooapis.com/fantasy/v2/player/{}/{}'
         return self.query(url.format(player_key, subresource))
 
-    def players(self, subresource='metadata', league_id=None, team_key=None, filters=None):
+    def players(self, league_id=None, league_ids=None, team_key=None, team_keys=None,
+                player_keys=None, subresource='metadata', filters=None):
         '''
         Gets players collection
 
         Args:
-            subresource (str): 'metadata', etc.
             league_id (int): id for your league, default None
+            league_ids (list): ids for your league, default None
             team_key (str): default None
+            team_keys (list): default None
+            player_keys (list): default None
+            subresource (str): 'metadata', etc.
             filters (dict): default None
 
         Returns:
             dict: parsed json
 
         '''
+        # construct the URL from the relevant id or key
+        if league_id:
+            url = 'https://fantasysports.yahooapis.com/fantasy/v2/league/' + self._league_key(league_id) + \
+                  '/players{}/{}'
+        elif league_ids:
+            league_keys = [self._league_key(lid) for lid in league_ids]
+            url = 'https://fantasysports.yahooapis.com/fantasy/v2/leagues;league_keys=' + \
+                    ','.join(league_keys) + '/players{}/{}'
+        elif team_key:
+            url = 'https://fantasysports.yahooapis.com/fantasy/v2/team/' + team_key + '/players{}/{}'
+        elif team_keys:
+            url = 'https://fantasysports.yahooapis.com/fantasy/v2/teams;team_keys=' + \
+                    ','.join(team_keys) + '/players{}/{}'
+        elif player_keys:
+            url = 'https://fantasysports.yahooapis.com/fantasy/v2/players;player_keys=' + \
+                    ','.join(player_keys) + '{}/{}'
+        else:
+            raise ValueError('must specify one of: league_id, league_ids, team_key, team_keys, player_keys')
+
+        # add filters to the url
         if filters:
             if set(filters.keys()) <= set(self.players_filters):
-                if league_id:
-                    url = 'https://fantasysports.yahooapis.com/fantasy/v2/league/{}/players;{}/{}'
-                    return self.query(url.format(self._league_key(league_id), self._filtstr(filters), subresource))
-                elif team_key:
-                    url = 'https://fantasysports.yahooapis.com/fantasy/v2/teams/{}/players;{}/{}'
-                    return self.query(url.format(self._league_key(league_id), self._filtstr(filters), subresource))
-                else:
-                    raise ValueError('must have league_id or team_key')
+                return self.query(url.format(self._filtstr(filters), subresource))
             else:
                 raise ValueError('games invalid filters: {}'.format(filters))
         else:
-            if league_id:
-                url = 'https://fantasysports.yahooapis.com/fantasy/v2/league/{}/players/{}'
-                return self.query(url.format(self._league_key(league_id)), subresource)
-            elif team_key:
-                url = 'https://fantasysports.yahooapis.com/fantasy/v2/teams/{}/players/{}'
-                return self.query(url.format(team_key), subresource)
-            else:
-                raise ValueError('must have league_id or team_key')
+            return self.query(url.format('', subresource))
 
-    def query(self, url, params={'format': 'json'}):
+    def query(self, url):
         '''
         Query yahoo API
                
         '''
         hdr = {'Authorization': 'Bearer %s' % self.auth['access_token']}
-        if params:
-            r = self.s.get(url, headers=hdr, params=params)
-        else:
-            r = self.s.get(url, headers=hdr)
+        r = self.s.get(url, headers=hdr, params=self.response_format)
         content = r.json()
         if 'error' in content:
             # if get error for valid credentials, refresh and try again
             desc = content['error']['description']
             if 'Please provide valid credentials' in desc:
                 self._refresh_credentials()
-                if params:
-                    r = self.s.get(url, headers=hdr, params=params)
-                else:
-                    r = self.s.get(url, headers=hdr)
+                r = self.s.get(url, headers=hdr, params=self.response_format)
         return r.json()
 
     def roster(self, team_key, subresource='players', roster_date=None):
