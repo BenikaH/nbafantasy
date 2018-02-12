@@ -1,0 +1,12 @@
+<html>
+<body>
+<h1>My App</h1>
+<div>
+<table>
+{% for item in seasons %}
+<tr><td>{{ item.season_year }}</td><td>{{ item.season_code }}</td></tr>
+{% endfor %}
+</table>
+</div>
+</body>
+</html>

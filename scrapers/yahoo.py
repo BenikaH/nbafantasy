@@ -604,14 +604,18 @@ class YahooFantasyScraper(BasketballScraper):
         '''
         hdr = {'Authorization': 'Bearer %s' % self.auth['access_token']}
         r = self.s.get(url, headers=hdr, params=self.response_format)
-        content = r.json()
-        if 'error' in content:
-            # if get error for valid credentials, refresh and try again
-            desc = content['error']['description']
-            if 'Please provide valid credentials' in desc:
-                self._refresh_credentials()
-                r = self.s.get(url, headers=hdr, params=self.response_format)
-        return r.json()
+
+        if self.response_format == 'json':
+            content = r.json()
+            if 'error' in content:
+                # if get error for valid credentials, refresh and try again
+                desc = content['error']['description']
+                if 'Please provide valid credentials' in desc:
+                    self._refresh_credentials()
+                    r = self.s.get(url, headers=hdr, params=self.response_format)
+            return r.json()
+        else:
+            return r.text
 
     def roster(self, team_key, subresource='players', roster_date=None):
         '''

@@ -1,6 +1,8 @@
 import logging
-import json
-from nba.utility import merge_two, merge_many
+import re
+import xml.etree.ElementTree as ET
+
+from nba.utility import merge_many
 
 
 class YahooNBAParser(object):
@@ -8,7 +10,52 @@ class YahooNBAParser(object):
     def __init__(self):
         logging.getLogger(__name__).addHandler(logging.NullHandler())
 
-    def teams(self, content):
+    def _game_stat_categories(self, content):
+        '''
+        Parses stat_categories from game resource
+        
+        Args:
+            content (str): 
+
+        Returns:
+            list: of dict
+        '''
+
+    def game(self, content, subresource='metadata'):
+        '''
+        Parses game resource
+        
+        Args:
+            content (str): 
+
+        Returns:
+            dict
+
+        '''
+        # strip namespaces - not needed
+        # then parse content2
+        content2 = re.sub(r'\sxmlns="[^"]+"', '', str(content), count=1)
+        root = ET.fromstring(content2)
+        return [{child.tag: child.text for child in game} for game in root.iter('game')]
+
+    def leagues(self, content):
+        '''
+        Parses leagues collection
+        
+        Args:
+            content (str): XML 
+
+        Returns:
+            dict
+            
+        '''
+        # strip namespaces - not needed
+        # then parse content2
+        content2 = re.sub(r'\sxmlns="[^"]+"', '', str(content), count=1)
+        root = ET.fromstring(content2)
+        return [{child.tag: child.text for child in league} for league in root.iter('league')]
+
+    def teams_json(self, content):
         '''
         Parses teams API call
         

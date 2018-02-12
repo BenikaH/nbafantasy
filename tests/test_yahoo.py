@@ -9,6 +9,7 @@ from nbafantasy.parsers.yahoo import YahooNBAParser
 
 import unittest
 
+
 class Yahoo_test(unittest.TestCase):
 
     def setUp(self):
@@ -18,7 +19,7 @@ class Yahoo_test(unittest.TestCase):
         '''
         logging.basicConfig(level=logging.INFO)
         self.scraper = YahooFantasyScraper(str(Path.home() / 'auth.json'))
-        self.parser = YahooNBAParser
+        self.parser = YahooNBAParser()
         self.roster_date = '2018-01-15'
 
     @property
@@ -280,6 +281,40 @@ class Yahoo_test(unittest.TestCase):
             g = self.scraper.users(subresource=subr)
             logging.info(g)
             self.assertIsNotNone(g.get('fantasy_content'))
+
+    @unittest.skip('skip test_parse_leagues')
+    def test_parse_leagues(self):
+        '''
+        parser.league
+        
+        '''
+        self.scraper.response_format ='xml'
+        content = self.scraper.leagues(league_keys=self.league_keys(2))
+        leagues = self.parser.leagues(content=content)
+        logging.info(leagues)
+        self.assertIsNotNone(leagues)
+
+    def test_parse_game(self):
+        '''
+        parser.game
+
+        '''
+        self.scraper.response_format = 'xml'
+        content = self.scraper.game()
+        games = self.parser.game(content=content)
+        logging.info(games)
+        self.assertIsNotNone(games)
+
+        # why is stat_categories a blank line?
+        content = self.scraper.game(subresource='stat_categories')
+        games = self.parser.game(content=content)
+        logging.info(games)
+        self.assertIsNotNone(games)
+
+        content = self.scraper.game(subresource='position_types')
+        games = self.parser.game(content=content)
+        logging.info(games)
+        self.assertIsNotNone(games)
 
 
 if __name__=='__main__':
