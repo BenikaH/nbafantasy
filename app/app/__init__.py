@@ -1,5 +1,6 @@
 import calendar
 from datetime import datetime
+import logging
 
 from config import Config
 from flask import Flask
@@ -31,5 +32,6 @@ app = Flask(__name__)
 app.json_encoder = CustomJSONEncoder
 app.config.from_object(Config)
 db = SQLAlchemy(app)
+logging.basicConfig(level=logging.INFO)
 
 from app import routes, models
